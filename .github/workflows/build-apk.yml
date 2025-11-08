@@ -20,18 +20,17 @@ jobs:
         
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
-      with:
-        api-level: 34
-        build-tools: 34.0.0
-        cmake: 3.22.1
-        ndk: 25.1.8937393
+        
+    - name: Download and setup Gradle
+      run: |
+        wget https://services.gradle.org/distributions/gradle-8.4-bin.zip
+        unzip -q gradle-8.4-bin.zip
+        echo "GRADLE_HOME=$PWD/gradle-8.4" >> $GITHUB_ENV
+        echo "$PWD/gradle-8.4/bin" >> $GITHUB_PATH
         
     - name: Build with Gradle
       run: |
-        # Устанавливаем Gradle с правильными настройками
-        ./gradle-8.4/bin/gradle -p app assembleDebug \
-          -Dorg.gradle.jvmargs=-Xmx2g \
-          -Dandroid.builder.sdkDownload=true
+        gradle -p app assembleDebug
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
