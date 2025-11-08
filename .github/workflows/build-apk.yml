@@ -21,20 +21,24 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
         
-    - name: Download and setup Gradle
+    - name: Build with Gradle Wrapper
       run: |
-        wget https://services.gradle.org/distributions/gradle-8.4-bin.zip
-        unzip -q gradle-8.4-bin.zip
-        echo "GRADLE_HOME=$PWD/gradle-8.4" >> $GITHUB_ENV
-        echo "$PWD/gradle-8.4/bin" >> $GITHUB_PATH
+        # Создаем минимальный gradlew
+        cat > gradlew << 'EOF'
+#!/bin/sh
+./gradle-8.4/bin/gradle "$@"
+EOF
+        chmod +x gradlew
         
-    - name: Build with Gradle
-      run: |
-        gradle -p app assembleDebug
+        # Скачиваем Gradle
+        wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip
+        unzip -q gradle-8.4-bin.zip
+        
+        # Собираем APK
+        ./gradlew -p app assembleDebug
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
         path: app/build/outputs/apk/debug/*.apk
-        retention-days: 30
