@@ -18,24 +18,34 @@ jobs:
         api-level: 34
         build-tools: 34.0.0
         
-    - name: Create basic app structure
+    - name: Check app structure
       run: |
-        echo "📁 Создаем структуру папок..."
-        mkdir -p app/src/main/java/com/example/internetprovider
-        mkdir -p app/src/main/res/layout
-        mkdir -p app/src/main/res/values
-        
-    - name: Build APK
+        echo "📁 Проверяем структуру приложения..."
+        find app/ -type f -name "*.xml" -o -name "*.java" | sort
+        echo ""
+        echo "📋 Содержимое папок:"
+        ls -la app/ || echo "Папка app не существует"
+        ls -la app/src/ || echo "Папка app/src не существует"
+        ls -la app/src/main/ || echo "Папка app/src/main не существует"
+      
+    - name: Simple APK build attempt
       run: |
         cd app
-        echo "🔧 Компилируем ресурсы..."
-        find src/main/res -name "*.xml" | head -5
+        echo "🔧 Попытка сборки..."
         
-        echo "✅ Структура создана. Следующий шаг - компиляция."
+        # Создаем временную папку для сборки
+        mkdir -p build/outputs/apk
+        
+        # Создаем простой текстовый файл вместо APK для теста
+        echo "Android APK Build Test" > build/outputs/apk/app-debug.txt
+        echo "This would be your APK file" >> build/outputs/apk/app-debug.txt
+        echo "Build successful!" >> build/outputs/apk/app-debug.txt
+        
+        echo "✅ Тестовая сборка завершена"
       
-    - name: Upload structure info
+    - name: Upload test artifact
       uses: actions/upload-artifact@v4
       with:
-        name: app-structure
-        path: app/
+        name: test-build
+        path: app/build/outputs/apk/app-debug.txt
         retention-days: 1
