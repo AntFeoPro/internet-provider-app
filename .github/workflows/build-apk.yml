@@ -12,54 +12,71 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Fix app structure
-      run: |
-        echo "🔧 Исправляем структуру папок..."
-        
-        # Создаем правильную структуру
-        mkdir -p app/src/main/res/values
-        mkdir -p app/src/main/res/layout
-        
-        # Перемещаем файлы в правильные папки
-        if [ -f "app/src/main/res_values/strings.xml" ]; then
-          mv "app/src/main/res_values/strings.xml" "app/src/main/res/values/strings.xml"
-        fi
-        
-        if [ -f "app/src/main/res/layout/activity_main.xml" ]; then
-          mv "app/src/main/res/layout/activity_main.xml" "app/src/main/res/layout/activity_main.xml"
-        fi
-        
-        # Удаляем неправильную папку
-        rm -rf app/src/main/res_values
-        
-        echo "✅ Структура исправлена"
-      
-    - name: Check final structure
-      run: |
-        echo "📁 Финальная структура:"
-        find app/ -type f -name "*.xml" -o -name "*.java" -o -name "*.kt" | sort
-        echo ""
-        echo "📋 Папки:"
-        tree app/ || find app/ -type d | sort
-      
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       with:
         api-level: 34
         build-tools: 34.0.0
+        platforms: android-34
         
-    - name: Try simple build
+    - name: Build APK with AAPT2
       run: |
         cd app
-        echo "🔧 Попытка простой сборки..."
         
-        # Проверяем что все файлы на месте
-        if [ -f "src/main/AndroidManifest.xml" ] && \
-           [ -f "src/main/res/values/strings.xml" ] && \
-           [ -f "src/main/res/layout/activity_main.xml" ]; then
-          echo "✅ Все необходимые файлы найдены!"
-          echo "📱 Приложение готово к сборке"
-        else
-          echo "❌ Не все файлы найдены"
-          find . -name "*.xml" -o -name "*.java" -o -name "*.kt"
-        fi
+        echo "🔧 Компилируем ресурсы..."
+        # Создаем папку для скомпилированных ресурсов
+        mkdir -p build/res
+        
+        # Компилируем XML ресурсы
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile \
+          -o build/res/ \
+          src/main/res/layout/activity_main.xml \
+          src/main/res/values/strings.xml
+        
+        echo "🔧 Линкуем ресурсы..."
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 link \
+          -o build/resources.apk \
+          -I $ANDROID_HOME/platforms/android-34/android.jar \
+          --manifest AndroidManifest.xml \
+          --java build/generated \
+          build/res/*.flat
+        
+        echo "🔧 Компилируем Java код..."
+        mkdir -p build/obj
+        javac -d build/obj \
+          -cp "src/main/java:$ANDROID_HOME/platforms/android-34/android.jar" \
+          -sourcepath src/main/java \
+          src/main/java/com/example/internetprovider/MainActivity.java
+        
+        echo "🔧 Создаем DEX файл..."
+        $ANDROID_HOME/build-tools/34.0.0/d8 \
+          --lib $ANDROID_HOME/platforms/android-34/android.jar \
+          --output build/ \
+          build/obj/com/example/internetprovider/*.class
+        
+        echo "🔧 Создаем APK..."
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/app-debug.apk \
+          -I $ANDROID_HOME/platforms/android-34/android.jar \
+          --manifest AndroidManifest.xml \
+          build/res/*.flat
+        
+        echo "🔧 Добавляем DEX в APK..."
+        cd build
+        zip -uj app-debug.apk classes.dex
+        cd ..
+        
+        echo "✅ APK успешно собран!"
+      
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: internet-provider-app
+        path: app/build/app-debug.apk
+        retention-days: 30
+        
+    - name: Show build info
+      run: |
+        echo "📁 Структура проекта:"
+        find app -type f -name "*.java" -o -name "*.xml" | head -10
+        echo "📦 Содержимое build папки:"
+        ls -la app/build/ 2>/dev/null || echo "Build folder not found"
