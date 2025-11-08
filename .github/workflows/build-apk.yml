@@ -18,20 +18,25 @@ jobs:
         api-level: 34
         build-tools: 34.0.0
         
+    - name: Check app structure
+      run: |
+        echo "📁 Проверяем структуру папок..."
+        find app/ -type f -name "*.xml" -o -name "*.java" | sort
+        echo "AndroidManifest.xml должен быть в app/src/main/"
+        
     - name: Build APK with AAPT and D8
       run: |
         cd app
         
         echo "🔧 Компиляция ресурсов..."
-        # Создаем временную папку для скомпилированных ресурсов
         mkdir -p build/res
         
-        # Компилируем XML ресурсы в бинарный формат
+        # Компилируем ресурсы из src/main/res/
         $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/layout/activity_main.xml -o build/res/
         $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/values/strings.xml -o build/res/
         
         echo "🔧 Линковка ресурсов и генерация R.java..."
-        # Линкуем ресурсы и генерируем R.java
+        # Используем правильный путь к AndroidManifest.xml
         $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/resources.apk \
           -I $ANDROID_HOME/platforms/android-34/android.jar \
           --manifest src/main/AndroidManifest.xml \
@@ -40,7 +45,6 @@ jobs:
         
         echo "🔧 Компиляция Java кода..."
         mkdir -p build/obj
-        # Компилируем Java код включая сгенерированный R.java
         javac -d build/obj \
           -cp "src/main/java:build/generated/com/example/internetprovider:$ANDROID_HOME/platforms/android-34/android.jar" \
           -sourcepath "src/main/java:build/generated" \
@@ -53,7 +57,6 @@ jobs:
           build/obj/com/example/internetprovider/*.class
         
         echo "🔧 Создание APK..."
-        # Создаем окончательный APK
         $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/app-debug.apk \
           -I $ANDROID_HOME/platforms/android-34/android.jar \
           --manifest src/main/AndroidManifest.xml \
@@ -65,7 +68,7 @@ jobs:
         cd ..
         
         echo "✅ APK собран успешно!"
-        ls -la build/
+        ls -la build/app-debug.apk
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
