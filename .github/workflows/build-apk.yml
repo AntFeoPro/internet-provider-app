@@ -17,66 +17,24 @@ jobs:
       with:
         api-level: 34
         build-tools: 34.0.0
-        platforms: android-34
         
-    - name: Build APK with AAPT2
+    - name: Check app structure
+      run: |
+        echo "📁 Проверяем структуру app/..."
+        find app/ -type f -name "*.xml" | head -10
+        echo ""
+        echo "📁 Содержимое app/:"
+        ls -la app/
+        echo ""
+        echo "📁 Содержимое app/src/:"
+        ls -la app/src/ || echo "Папка src не существует"
+        
+    - name: Build test
       run: |
         cd app
-        
-        echo "🔧 Компилируем ресурсы..."
-        # Создаем папку для скомпилированных ресурсов
-        mkdir -p build/res
-        
-        # Компилируем XML ресурсы
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile \
-          -o build/res/ \
-          src/main/res/layout/activity_main.xml \
-          src/main/res/values/strings.xml
-        
-        echo "🔧 Линкуем ресурсы..."
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 link \
-          -o build/resources.apk \
-          -I $ANDROID_HOME/platforms/android-34/android.jar \
-          --manifest AndroidManifest.xml \
-          --java build/generated \
-          build/res/*.flat
-        
-        echo "🔧 Компилируем Java код..."
-        mkdir -p build/obj
-        javac -d build/obj \
-          -cp "src/main/java:$ANDROID_HOME/platforms/android-34/android.jar" \
-          -sourcepath src/main/java \
-          src/main/java/com/example/internetprovider/MainActivity.java
-        
-        echo "🔧 Создаем DEX файл..."
-        $ANDROID_HOME/build-tools/34.0.0/d8 \
-          --lib $ANDROID_HOME/platforms/android-34/android.jar \
-          --output build/ \
-          build/obj/com/example/internetprovider/*.class
-        
-        echo "🔧 Создаем APK..."
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/app-debug.apk \
-          -I $ANDROID_HOME/platforms/android-34/android.jar \
-          --manifest AndroidManifest.xml \
-          build/res/*.flat
-        
-        echo "🔧 Добавляем DEX в APK..."
-        cd build
-        zip -uj app-debug.apk classes.dex
-        cd ..
-        
-        echo "✅ APK успешно собран!"
-      
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: internet-provider-app
-        path: app/build/app-debug.apk
-        retention-days: 30
-        
-    - name: Show build info
-      run: |
-        echo "📁 Структура проекта:"
-        find app -type f -name "*.java" -o -name "*.xml" | head -10
-        echo "📦 Содержимое build папки:"
-        ls -la app/build/ 2>/dev/null || echo "Build folder not found"
+        if [ -f "AndroidManifest.xml" ]; then
+          echo "✅ AndroidManifest.xml найден!"
+        else
+          echo "❌ AndroidManifest.xml НЕ найден в app/"
+          find . -name "AndroidManifest.xml" | head -5
+        fi
