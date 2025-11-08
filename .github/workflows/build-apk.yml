@@ -12,37 +12,55 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       with:
         api-level: 34
         build-tools: 34.0.0
-        cmake: 3.22.1
+        platforms: android-34
+        cmdline-tools: latest
         
-    - name: Build with Gradle
+    - name: Build APK with Android Tools
       run: |
-        # Устанавливаем необходимые пакеты
-        sudo apt-get update
-        sudo apt-get install -y wget unzip
+        cd app
         
-        # Скачиваем Gradle
-        wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip
-        unzip -q gradle-8.4-bin.zip
+        echo "🔧 Компиляция ресурсов..."
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile -o compiled_resources res/**/*.xml
         
-        # Собираем APK с указанием репозиториев
-        ./gradle-8.4/bin/gradle -p app assembleDebug \
-          -Dorg.gradle.jvmargs=-Xmx2g \
-          --refresh-dependencies
+        echo "🔧 Линковка ресурсов..."
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o resources.apk \
+          -I $ANDROID_HOME/platforms/android-34/android.jar \
+          --manifest AndroidManifest.xml \
+          compiled_resources/*.flat
+        
+        echo "🔧 Компиляция Java кода..."
+        mkdir -p obj
+        javac -d obj \
+          -cp "src:$ANDROID_HOME/platforms/android-34/android.jar" \
+          -sourcepath src \
+          src/com/example/internetprovider/*.java
+        
+        echo "🔧 Создание DEX файла..."
+        $ANDROID_HOME/build-tools/34.0.0/d8 \
+          --lib $ANDROID_HOME/platforms/android-34/android.jar \
+          --output . \
+          obj/com/example/internetprovider/*.class
+        
+        echo "🔧 Создание APK..."
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o app-debug.apk \
+          -I $ANDROID_HOME/platforms/android-34/android.jar \
+          --manifest AndroidManifest.xml \
+          compiled_resources/*.flat \
+          --java src
+        
+        echo "🔧 Добавление DEX в APK..."
+        zip -uj app-debug.apk classes.dex
+        
+        echo "✅ APK собран успешно!"
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        name: internet-provider-app
+        path: app/app-debug.apk
         retention-days: 30
