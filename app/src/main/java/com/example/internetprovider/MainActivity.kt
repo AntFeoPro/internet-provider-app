@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         
         // Кнопка оплаты
         binding.paymentButton.setOnClickListener {
-            val paymentUrl = "https://payberry.ru"
+            val paymentUrl = "https://payberry.ru/pay?id=90&group=114&utm_source=gipernet.pro&utm_medium=referral&utm_campaign=gipernet.pro&utm_referrer=gipernet.pro"
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl))
             startActivity(intent)
         }
