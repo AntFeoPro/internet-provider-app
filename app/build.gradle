@@ -1,12 +1,25 @@
-plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+// ЭТОТ БЛОК ДОЛЖЕН БЫТЬ ПЕРВЫМ
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.0'
+    }
 }
 
-// Указываем репозитории для загрузки зависимостей
-repositories {
-    google()
-    mavenCentral()
+// ЗАТЕМ ПОДКЛЮЧАЕМ ПЛАГИНЫ
+plugins {
+    id 'com.android.application'
+}
+
+// И УКАЗЫВАЕМ РЕПОЗИТОРИИ ДЛЯ ЗАВИСИМОСТЕЙ
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
 
 android {
@@ -31,14 +44,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.10.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
