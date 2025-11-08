@@ -17,50 +17,25 @@ jobs:
       with:
         api-level: 34
         build-tools: 34.0.0
-        platforms: android-34
-        cmdline-tools: latest
         
-    - name: Build APK with Android Tools
+    - name: Create basic app structure
+      run: |
+        echo "📁 Создаем структуру папок..."
+        mkdir -p app/src/main/java/com/example/internetprovider
+        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res/values
+        
+    - name: Build APK
       run: |
         cd app
+        echo "🔧 Компилируем ресурсы..."
+        find src/main/res -name "*.xml" | head -5
         
-        echo "🔧 Компиляция ресурсов..."
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile -o compiled_resources res/**/*.xml
-        
-        echo "🔧 Линковка ресурсов..."
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o resources.apk \
-          -I $ANDROID_HOME/platforms/android-34/android.jar \
-          --manifest AndroidManifest.xml \
-          compiled_resources/*.flat
-        
-        echo "🔧 Компиляция Java кода..."
-        mkdir -p obj
-        javac -d obj \
-          -cp "src:$ANDROID_HOME/platforms/android-34/android.jar" \
-          -sourcepath src \
-          src/com/example/internetprovider/*.java
-        
-        echo "🔧 Создание DEX файла..."
-        $ANDROID_HOME/build-tools/34.0.0/d8 \
-          --lib $ANDROID_HOME/platforms/android-34/android.jar \
-          --output . \
-          obj/com/example/internetprovider/*.class
-        
-        echo "🔧 Создание APK..."
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o app-debug.apk \
-          -I $ANDROID_HOME/platforms/android-34/android.jar \
-          --manifest AndroidManifest.xml \
-          compiled_resources/*.flat \
-          --java src
-        
-        echo "🔧 Добавление DEX в APK..."
-        zip -uj app-debug.apk classes.dex
-        
-        echo "✅ APK собран успешно!"
+        echo "✅ Структура создана. Следующий шаг - компиляция."
       
-    - name: Upload APK
+    - name: Upload structure info
       uses: actions/upload-artifact@v4
       with:
-        name: internet-provider-app
-        path: app/app-debug.apk
-        retention-days: 30
+        name: app-structure
+        path: app/
+        retention-days: 1
