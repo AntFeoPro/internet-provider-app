@@ -30,15 +30,13 @@ jobs:
         mkdir -p app/src/main/java/com/example/internetprovider
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
-        mkdir -p app/src/main/res/drawable
         
         # Create AndroidManifest.xml
         echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/AndroidManifest.xml
         echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android"' >> app/src/main/AndroidManifest.xml
         echo '    package="com.example.internetprovider">' >> app/src/main/AndroidManifest.xml
         echo '    <uses-permission android:name="android.permission.INTERNET" />' >> app/src/main/AndroidManifest.xml
-        echo '    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />' >> app/src/main/AndroidManifest.xml
-        echo '    <application android:label="Интернет Провайдер" android:theme="@style/AppTheme">' >> app/src/main/AndroidManifest.xml
+        echo '    <application android:label="Интернет Провайдер" android:theme="@android:style/Theme.Material.Light">' >> app/src/main/AndroidManifest.xml
         echo '        <activity android:name=".MainActivity" android:exported="true">' >> app/src/main/AndroidManifest.xml
         echo '            <intent-filter>' >> app/src/main/AndroidManifest.xml
         echo '                <action android:name="android.intent.action.MAIN" />' >> app/src/main/AndroidManifest.xml
@@ -52,37 +50,7 @@ jobs:
         echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/values/strings.xml
         echo '<resources>' >> app/src/main/res/values/strings.xml
         echo '    <string name="app_name">Интернет Провайдер</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="tariffs">Тарифы</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="contacts">Контакты</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="payment">Оплата</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="private_sector">Частный сектор</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="apartment_building">Многоквартирный дом</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="business">Юридические лица</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="pay_online">Оплатить онлайн</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="phone">Телефон: +7 (123) 456-78-90</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="email">Email: support@provider.ru</string>' >> app/src/main/res/values/strings.xml
-        echo '    <string name="address">Адрес: г. Москва, ул. Примерная, д. 1</string>' >> app/src/main/res/values/strings.xml
         echo '</resources>' >> app/src/main/res/values/strings.xml
-        
-        # Create colors.xml
-        echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/values/colors.xml
-        echo '<resources>' >> app/src/main/res/values/colors.xml
-        echo '    <color name="colorPrimary">#2196F3</color>' >> app/src/main/res/values/colors.xml
-        echo '    <color name="colorPrimaryDark">#1976D2</color>' >> app/src/main/res/values/colors.xml
-        echo '    <color name="colorAccent">#FF4081</color>' >> app/src/main/res/values/colors.xml
-        echo '    <color name="background">#F5F5F5</color>' >> app/src/main/res/values/colors.xml
-        echo '</resources>' >> app/src/main/res/values/colors.xml
-        
-        # Create styles.xml
-        echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/values/styles.xml
-        echo '<resources>' >> app/src/main/res/values/styles.xml
-        echo '    <style name="AppTheme" parent="android:Theme.Material.Light">' >> app/src/main/res/values/styles.xml
-        echo '        <item name="android:colorPrimary">@color/colorPrimary</item>' >> app/src/main/res/values/styles.xml
-        echo '        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>' >> app/src/main/res/values/styles.xml
-        echo '        <item name="android:colorAccent">@color/colorAccent</item>' >> app/src/main/res/values/styles.xml
-        echo '        <item name="android:windowBackground">@color/background</item>' >> app/src/main/res/values/styles.xml
-        echo '    </style>' >> app/src/main/res/values/styles.xml
-        echo '</resources>' >> app/src/main/res/values/styles.xml
         
         # Create MainActivity.java
         echo 'package com.example.internetprovider;' > app/src/main/java/com/example/internetprovider/MainActivity.java
