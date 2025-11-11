@@ -25,25 +25,19 @@ jobs:
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
     
-    - name: Create project files
+    - name: Create basic project structure
       run: |
-        # Создаем структуру папок
         mkdir -p app/src/main/java/com/example/internetprovider
         mkdir -p app/src/main/res/layout
-        mkdir -p app/src/main/res/values
-        
-        # Создаем AndroidManifest.xml
-        cat > app/src/main/AndroidManifest.xml << EOF
+    
+    - name: Create AndroidManifest.xml
+      run: |
+        cat > app/src/main/AndroidManifest.xml << 'MANIFEST'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.internetprovider">
-    <application
-        android:allowBackup="true"
-        android:label="Internet Provider"
-        android:theme="@android:style/Theme.DeviceDefault">
-        <activity
-            android:name=".MainActivity"
-            android:label="Internet Provider">
+    <application android:label="My App">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -51,10 +45,11 @@ jobs:
         </activity>
     </application>
 </manifest>
-EOF
-
-        # Создаем MainActivity.java
-        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << EOF
+MANIFEST
+    
+    - name: Create MainActivity.java
+      run: |
+        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << 'JAVA'
 package com.example.internetprovider;
 import android.app.Activity;
 import android.os.Bundle;
@@ -64,64 +59,46 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
     }
 }
-EOF
-
-        # Создаем простой layout
-        cat > app/src/main/res/layout/activity_main.xml << EOF
+JAVA
+    
+    - name: Create layout file
+      run: |
+        cat > app/src/main/res/layout/activity_main.xml << 'LAYOUT'
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 </LinearLayout>
-EOF
+LAYOUT
     
-    - name: Build APK
+    - name: Build and sign APK
       run: |
         cd app
         
-        # Создаем дебажный ключ
+        # Create debug keystore
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
         
-        # Компилируем ресурсы
-        mkdir -p build/res
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/layout/activity_main.xml -o build/res/
+        # Create build directories
+        mkdir -p build/classes build/dex
         
-        # Линкуем ресурсы
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/resources.apk \
-          -I $ANDROID_HOME/platforms/android-34/android.jar \
-          --manifest src/main/AndroidManifest.xml \
-          --java build/generated \
-          build/res/*.flat
+        # Compile Java code
+        javac -d build/classes -cp $ANDROID_HOME/platforms/android-34/android.jar src/main/java/com/example/internetprovider/MainActivity.java
         
-        # Компилируем Java
-        mkdir -p build/classes
-        javac -d build/classes \
-          -cp "$ANDROID_HOME/platforms/android-34/android.jar" \
-          src/main/java/com/example/internetprovider/MainActivity.java
+        # Create DEX file
+        $ANDROID_HOME/build-tools/34.0.0/d8 --lib $ANDROID_HOME/platforms/android-34/android.jar --output build/dex/ build/classes/com/example/internetprovider/*.class
         
-        # Создаем DEX
-        mkdir -p build/dex
-        $ANDROID_HOME/build-tools/34.0.0/d8 \
-          --lib $ANDROID_HOME/platforms/android-34/android.jar \
-          --output build/dex/ \
-          build/classes/com/example/internetprovider/*.class
+        # Create APK with aapt package
+        $ANDROID_HOME/build-tools/34.0.0/aapt package -M src/main/AndroidManifest.xml -I $ANDROID_HOME/platforms/android-34/android.jar -F build/app-unsigned.apk -f
         
-        # Создаем и подписываем APK
-        $ANDROID_HOME/build-tools/34.0.0/aapt package \
-          -M src/main/AndroidManifest.xml \
-          -I $ANDROID_HOME/platforms/android-34/android.jar \
-          -F build/app-unsigned.apk \
-          -f
-        
-        # Добавляем DEX
+        # Add DEX to APK
         cd build
         zip -uj app-unsigned.apk dex/classes.dex
         cd ..
         
-        # Подписываем
-        apksigner sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android --out build/app-debug.apk build/app-unsigned.apk
+        # Sign APK
+        $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android --out build/app-debug.apk build/app-unsigned.apk
         
-        echo "✅ APK создан!"
+        echo "APK built successfully!"
         ls -la build/app-debug.apk
       
     - name: Upload APK
