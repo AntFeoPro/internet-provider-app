@@ -22,35 +22,23 @@ jobs:
       
     - name: Install Android packages
       run: |
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-33" "build-tools;33.0.2" "platform-tools"
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-33" "build-tools;33.0.2"
     
-    - name: Create complete project structure
+    - name: Create basic structure
       run: |
-        # Clean and create structure
-        rm -rf app/
         mkdir -p app/src/main/java/com/example/internetprovider
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
-        mkdir -p app/src/main/res/drawable
-        
-        # Create proper AndroidManifest.xml
-        cat > app/src/main/AndroidManifest.xml << 'EOF'
+    
+    - name: Create AndroidManifest
+      run: |
+        cat > app/src/main/AndroidManifest.xml << 'MANIFEST'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.internetprovider">
-
     <uses-permission android:name="android.permission.INTERNET" />
-    
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@android:style/Theme.Material.Light.DarkActionBar">
-        
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name">
+    <application android:label="Интернет Провайдер">
+        <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -58,25 +46,17 @@ jobs:
         </activity>
     </application>
 </manifest>
-EOF
-
-        # Create strings.xml
-        cat > app/src/main/res/values/strings.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Интернет Провайдер</string>
-</resources>
-EOF
-
-        # Create proper layout file
-        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+MANIFEST
+    
+    - name: Create layout
+      run: |
+        cat > app/src/main/res/layout/activity_main.xml << 'LAYOUT'
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -85,88 +65,72 @@ EOF
         android:textStyle="bold"
         android:gravity="center"
         android:layout_marginBottom="24dp" />
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Тарифы:"
         android:textSize="20sp"
-        android:textStyle="bold"
+        android:textStyle="bold" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="• Частный сектор: 500 руб/мес"
         android:layout_marginBottom="8dp" />
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="• Частный сектор: 100 Мбит/с - 500 руб/мес"
-        android:layout_marginBottom="4dp" />
-
+        android:text="• Многоквартирный дом: 700 руб/мес"
+        android:layout_marginBottom="8dp" />
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="• Многоквартирный дом: 200 Мбит/с - 700 руб/мес"
-        android:layout_marginBottom="4dp" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="• Юридические лица: 500 Мбит/с - 2000 руб/мес"
+        android:text="• Юридические лица: 2000 руб/мес"
         android:layout_marginBottom="16dp" />
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Контакты:"
         android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
-
+        android:textStyle="bold" />
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Телефон: +7 (123) 456-78-90"
         android:layout_marginBottom="4dp" />
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Email: support@provider.ru"
         android:layout_marginBottom="4dp" />
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Адрес: г. Москва, ул. Примерная, д. 1"
         android:layout_marginBottom="24dp" />
-
     <Button
         android:id="@+id/payButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Оплатить через Payberry"
-        android:textSize="16sp" />
-
+        android:text="Оплатить через Payberry" />
 </LinearLayout>
-EOF
-
-        # Create MainActivity with proper layout inflation
-        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << 'EOF'
+LAYOUT
+    
+    - name: Create MainActivity
+      run: |
+        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << 'JAVA'
 package com.example.internetprovider;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-
 public class MainActivity extends Activity {
-    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
-        Button payButton = findViewById(R.id.payButton);
+        Button payButton = (Button) findViewById(R.id.payButton);
         payButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -175,87 +139,31 @@ public class MainActivity extends Activity {
             }
         });
     }
-}
-EOF
-
-        # Create R.java file manually since we don't have proper resource compilation
-        cat > app/src/main/java/com/example/internetprovider/R.java << 'EOF'
-package com.example.internetprovider;
-
-public final class R {
-    public static final class layout {
-        public static final int activity_main = 0x7f030000;
-    }
-    public static final class id {
-        public static final int payButton = 0x7f070000;
-    }
-    public static final class string {
-        public static final int app_name = 0x7f040000;
-    }
-    public static final class mipmap {
-        public static final int ic_launcher = 0x7f020000;
+    public static final class R {
+        public static final class layout {
+            public static final int activity_main = 0x7f030000;
+        }
+        public static final class id {
+            public static final int payButton = 0x7f070000;
+        }
     }
 }
-EOF
-
-        echo "✅ Project structure created"
+JAVA
     
-    - name: Build proper APK
+    - name: Build APK
       run: |
         cd app
-        
-        echo "🔧 Creating debug keystore..."
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-        
-        echo "🔧 Compiling resources..."
-        mkdir -p build/gen build/classes build/apk
-        $ANDROID_HOME/build-tools/33.0.2/aapt2 compile src/main/res/layout/activity_main.xml -o build/res.zip
-        $ANDROID_HOME/build-tools/33.0.2/aapt2 compile src/main/res/values/strings.xml -o build/res.zip
-        
-        echo "🔧 Linking resources..."
-        $ANDROID_HOME/build-tools/33.0.2/aapt2 link -o build/resources.apk \
-          -I $ANDROID_HOME/platforms/android-33/android.jar \
-          --manifest src/main/AndroidManifest.xml \
-          --java build/gen \
-          build/res.zip
-        
-        echo "🔧 Compiling Java code..."
-        javac -d build/classes \
-          -cp "$ANDROID_HOME/platforms/android-33/android.jar:build/gen" \
-          src/main/java/com/example/internetprovider/*.java \
-          build/gen/com/example/internetprovider/*.java
-        
-        echo "🔧 Creating DEX file..."
-        mkdir -p build/dex
-        $ANDROID_HOME/build-tools/33.0.2/d8 \
-          --lib $ANDROID_HOME/platforms/android-33/android.jar \
-          --output build/dex \
-          build/classes/com/example/internetprovider/*.class
-        
-        echo "🔧 Creating APK..."
-        $ANDROID_HOME/build-tools/33.0.2/aapt package -F build/app-unsigned.apk \
-          -I $ANDROID_HOME/platforms/android-33/android.jar \
-          -M src/main/AndroidManifest.xml \
-          -S src/main/res \
-          -f
-        
-        echo "🔧 Adding DEX to APK..."
+        mkdir -p build/classes build/dex
+        javac -d build/classes -cp $ANDROID_HOME/platforms/android-33/android.jar src/main/java/com/example/internetprovider/MainActivity.java
+        $ANDROID_HOME/build-tools/33.0.2/d8 --lib $ANDROID_HOME/platforms/android-33/android.jar --output build/dex/ build/classes/com/example/internetprovider/*.class
+        $ANDROID_HOME/build-tools/33.0.2/aapt package -M src/main/AndroidManifest.xml -I $ANDROID_HOME/platforms/android-33/android.jar -S src/main/res -F build/app-unsigned.apk -f
         cd build
         zip -uj app-unsigned.apk dex/classes.dex
         cd ..
-        
-        echo "🔧 Signing APK..."
-        $ANDROID_HOME/build-tools/33.0.2/apksigner sign \
-          --ks debug.keystore \
-          --ks-pass pass:android \
-          --key-pass pass:android \
-          --out build/app-debug.apk \
-          build/app-unsigned.apk
-        
-        echo "🔧 Verifying APK..."
-        $ANDROID_HOME/build-tools/33.0.2/aapt list build/app-debug.apk
-        
-        echo "✅ APK built successfully!"
+        $ANDROID_HOME/build-tools/33.0.2/apksigner sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android --out build/app-debug.apk build/app-unsigned.apk
+        ls -la build/app-debug.apk
+        echo "APK size:"
         ls -lh build/app-debug.apk
       
     - name: Upload APK
@@ -263,4 +171,3 @@ EOF
       with:
         name: internet-provider-app
         path: app/build/app-debug.apk
-        retention-days: 30
