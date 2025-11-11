@@ -24,131 +24,19 @@ jobs:
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-33" "build-tools;33.0.2"
     
-    - name: Create basic structure
+    - name: Create project files
       run: |
         mkdir -p app/src/main/java/com/example/internetprovider
         mkdir -p app/src/main/res/layout
-        mkdir -p app/src/main/res/values
-    
-    - name: Create AndroidManifest
-      run: |
-        cat > app/src/main/AndroidManifest.xml << 'MANIFEST'
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.internetprovider">
-    <uses-permission android:name="android.permission.INTERNET" />
-    <application android:label="Интернет Провайдер">
-        <activity android:name=".MainActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-MANIFEST
-    
-    - name: Create layout
-      run: |
-        cat > app/src/main/res/layout/activity_main.xml << 'LAYOUT'
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Интернет Провайдер"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="24dp" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Тарифы:"
-        android:textSize="20sp"
-        android:textStyle="bold" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="• Частный сектор: 500 руб/мес"
-        android:layout_marginBottom="8dp" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="• Многоквартирный дом: 700 руб/мес"
-        android:layout_marginBottom="8dp" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="• Юридические лица: 2000 руб/мес"
-        android:layout_marginBottom="16dp" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Контакты:"
-        android:textSize="20sp"
-        android:textStyle="bold" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Телефон: +7 (123) 456-78-90"
-        android:layout_marginBottom="4dp" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Email: support@provider.ru"
-        android:layout_marginBottom="4dp" />
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Адрес: г. Москва, ул. Примерная, д. 1"
-        android:layout_marginBottom="24dp" />
-    <Button
-        android:id="@+id/payButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Оплатить через Payberry" />
-</LinearLayout>
-LAYOUT
-    
-    - name: Create MainActivity
-      run: |
-        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << 'JAVA'
-package com.example.internetprovider;
-import android.app.Activity;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-public class MainActivity extends Activity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Button payButton = (Button) findViewById(R.id.payButton);
-        payButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://payberry.ru"));
-                startActivity(browserIntent);
-            }
-        });
-    }
-    public static final class R {
-        public static final class layout {
-            public static final int activity_main = 0x7f030000;
-        }
-        public static final class id {
-            public static final int payButton = 0x7f070000;
-        }
-    }
-}
-JAVA
+        
+        # Create AndroidManifest.xml using printf
+        printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n    package="com.example.internetprovider">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <application android:label="Интернет Провайдер">\n        <activity android:name=".MainActivity" android:exported="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>\n' > app/src/main/AndroidManifest.xml
+        
+        # Create layout using printf
+        printf '<?xml version="1.0" encoding="utf-8"?>\n<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"\n    android:layout_width="match_parent"\n    android:layout_height="match_parent"\n    android:orientation="vertical"\n    android:padding="16dp">\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Интернет Провайдер"\n        android:textSize="24sp"\n        android:gravity="center"\n        android:layout_marginBottom="20dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Тарифы:"\n        android:textSize="18sp"\n        android:layout_marginBottom="10dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="• Частный сектор: 500 руб/мес"\n        android:layout_marginBottom="5dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="• Многоквартирный дом: 700 руб/мес"\n        android:layout_marginBottom="5dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="• Юридические лица: 2000 руб/мес"\n        android:layout_marginBottom="15dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Контакты:"\n        android:textSize="18sp"\n        android:layout_marginBottom="10dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Телефон: +7 (123) 456-78-90"\n        android:layout_marginBottom="5dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Email: support@provider.ru"\n        android:layout_marginBottom="5dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Адрес: г. Москва, ул. Примерная, д. 1"\n        android:layout_marginBottom="20dp" />\n    <Button\n        android:id="@+id/payButton"\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Оплатить через Payberry" />\n</LinearLayout>\n' > app/src/main/res/layout/activity_main.xml
+        
+        # Create MainActivity.java using printf
+        printf 'package com.example.internetprovider;\nimport android.app.Activity;\nimport android.content.Intent;\nimport android.net.Uri;\nimport android.os.Bundle;\nimport android.view.View;\nimport android.widget.Button;\npublic class MainActivity extends Activity {\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        setContentView(0x7f030000);\n        Button payButton = (Button) findViewById(0x7f070000);\n        payButton.setOnClickListener(new View.OnClickListener() {\n            @Override\n            public void onClick(View v) {\n                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://payberry.ru"));\n                startActivity(browserIntent);\n            }\n        });\n    }\n}\n' > app/src/main/java/com/example/internetprovider/MainActivity.java
     
     - name: Build APK
       run: |
@@ -163,8 +51,7 @@ JAVA
         cd ..
         $ANDROID_HOME/build-tools/33.0.2/apksigner sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android --out build/app-debug.apk build/app-unsigned.apk
         ls -la build/app-debug.apk
-        echo "APK size:"
-        ls -lh build/app-debug.apk
+        echo "APK built successfully!"
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
