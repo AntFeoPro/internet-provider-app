@@ -1,110 +1,72 @@
-name: Build Android APK
+    - name: Create minimal working Android project
+      run: |
+        # Создаем чистую структуру
+        rm -rf app/
+        mkdir -p app/src/main/java/com/example/internetprovider
+        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res/values
+        
+        # AndroidManifest.xml
+        cat > app/src/main/AndroidManifest.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.internetprovider">
+    
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+EOF
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+        # strings.xml
+        cat > app/src/main/res/values/strings.xml << 'EOF'
+<resources>
+    <string name="app_name">Internet Provider</string>
+</resources>
+EOF
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+        # MainActivity.java
+        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << 'EOF'
+package com.example.internetprovider;
+
+import android.app.Activity;
+import android.os.Bundle;
+
+public class MainActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+    }
+}
+EOF
+
+        # activity_main.xml
+        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
     
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-    
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-      
-    - name: Install Android packages
-      run: |
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
-        
-    - name: Check app structure
-      run: |
-        echo "📁 Проверяем структуру папок..."
-        find app/ -type f -name "*.xml" -o -name "*.java" | sort
-        ls -la app/src/main/
-        
-    - name: Build and sign APK
-      run: |
-        cd app
-        
-        echo "🔧 Очистка предыдущих сборок..."
-        rm -rf build/
-        
-        echo "🔧 Создаем дебажный ключ..."
-        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-        
-        echo "🔧 Создаем структуру папок..."
-        mkdir -p build/intermediates/res
-        mkdir -p build/intermediates/classes
-        mkdir -p build/intermediates/dex
-        mkdir -p build/generated
-        
-        echo "🔧 Компиляция ресурсов..."
-        # Компилируем ВСЕ ресурсы
-        find src/main/res -name "*.xml" | while read file; do
-          $ANDROID_HOME/build-tools/34.0.0/aapt2 compile "$file" -o build/intermediates/res/
-        done
-        
-        echo "🔧 Линковка ресурсов и генерация R.java..."
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/resources.apk \
-          -I $ANDROID_HOME/platforms/android-34/android.jar \
-          --manifest src/main/AndroidManifest.xml \
-          --java build/generated \
-          build/intermediates/res/*.flat
-        
-        echo "🔧 Компиляция Java кода..."
-        # Компилируем все Java файлы
-        javac -d build/intermediates/classes \
-          -cp "$ANDROID_HOME/platforms/android-34/android.jar:build/generated" \
-          $(find src/main/java -name "*.java") \
-          $(find build/generated -name "*.java" 2>/dev/null)
-        
-        echo "🔧 Создание DEX файла..."
-        # ФИКС: Создаем dex файл в существующую директорию
-        $ANDROID_HOME/build-tools/34.0.0/d8 \
-          --lib $ANDROID_HOME/platforms/android-34/android.jar \
-          --output build/intermediates/dex/ \
-          build/intermediates/classes/com/example/internetprovider/*.class
-        
-        echo "🔧 Создание APK..."
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/app-unsigned.apk \
-          -I $ANDROID_HOME/platforms/android-34/android.jar \
-          --manifest src/main/AndroidManifest.xml \
-          build/intermediates/res/*.flat
-        
-        echo "🔧 Добавляем DEX в APK..."
-        cd build
-        zip -uj app-unsigned.apk intermediates/dex/classes.dex
-        cd ..
-        
-        echo "🔧 Проверяем APK перед подписью..."
-        ls -la build/app-unsigned.apk
-        
-        echo "🔧 Подписываем APK..."
-        $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
-          --ks debug.keystore \
-          --ks-pass pass:android \
-          --key-pass pass:android \
-          --out build/app-debug.apk \
-          build/app-unsigned.apk
-        
-        echo "🔧 Проверяем подпись..."
-        $ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose build/app-debug.apk
-        
-        echo "✅ APK собран и подписан!"
-        ls -la build/app-debug.apk
-      
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: internet-provider-app
-        path: app/build/app-debug.apk
-        retention-days: 30
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello Internet Provider!"
+        android:textSize="24sp" />
+</LinearLayout>
+EOF
+
+        echo "✅ Минимальный проект создан"
