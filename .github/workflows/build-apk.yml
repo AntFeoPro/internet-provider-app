@@ -3,7 +3,6 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
@@ -23,87 +22,62 @@ jobs:
       
     - name: Install Android packages
       run: |
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
     
-    - name: Create basic project structure
+    - name: Create project files
       run: |
-        mkdir -p app/src/main/java/com/example/internetprovider
+        # Create directory structure
+        mkdir -p app/src/main/java/com/example/testapp
         mkdir -p app/src/main/res/layout
+        
+        # Create simple AndroidManifest.xml using echo
+        echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android"' >> app/src/main/AndroidManifest.xml
+        echo '    package="com.example.testapp">' >> app/src/main/AndroidManifest.xml
+        echo '    <application android:label="Test App">' >> app/src/main/AndroidManifest.xml
+        echo '        <activity android:name=".MainActivity">' >> app/src/main/AndroidManifest.xml
+        echo '            <intent-filter>' >> app/src/main/AndroidManifest.xml
+        echo '                <action android:name="android.intent.action.MAIN" />' >> app/src/main/AndroidManifest.xml
+        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> app/src/main/AndroidManifest.xml
+        echo '            </intent-filter>' >> app/src/main/AndroidManifest.xml
+        echo '        </activity>' >> app/src/main/AndroidManifest.xml
+        echo '    </application>' >> app/src/main/AndroidManifest.xml
+        echo '</manifest>' >> app/src/main/AndroidManifest.xml
+        
+        # Create simple MainActivity.java using echo
+        echo 'package com.example.testapp;' > app/src/main/java/com/example/testapp/MainActivity.java
+        echo 'import android.app.Activity;' >> app/src/main/java/com/example/testapp/MainActivity.java
+        echo 'import android.os.Bundle;' >> app/src/main/java/com/example/testapp/MainActivity.java
+        echo 'public class MainActivity extends Activity {' >> app/src/main/java/com/example/testapp/MainActivity.java
+        echo '    @Override' >> app/src/main/java/com/example/testapp/MainActivity.java
+        echo '    protected void onCreate(Bundle savedInstanceState) {' >> app/src/main/java/com/example/testapp/MainActivity.java
+        echo '        super.onCreate(savedInstanceState);' >> app/src/main/java/com/example/testapp/MainActivity.java
+        echo '    }' >> app/src/main/java/com/example/testapp/MainActivity.java
+        echo '}' >> app/src/main/java/com/example/testapp/MainActivity.java
+        
+        # Create simple layout using echo
+        echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/layout/activity_main.xml
+        echo '<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"' >> app/src/main/res/layout/activity_main.xml
+        echo '    android:layout_width="match_parent"' >> app/src/main/res/layout/activity_main.xml
+        echo '    android:layout_height="match_parent">' >> app/src/main/res/layout/activity_main.xml
+        echo '</LinearLayout>' >> app/src/main/res/layout/activity_main.xml
     
-    - name: Create AndroidManifest.xml
-      run: |
-        cat > app/src/main/AndroidManifest.xml << 'MANIFEST'
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.internetprovider">
-    <application android:label="My App">
-        <activity android:name=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-MANIFEST
-    
-    - name: Create MainActivity.java
-      run: |
-        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << 'JAVA'
-package com.example.internetprovider;
-import android.app.Activity;
-import android.os.Bundle;
-public class MainActivity extends Activity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-}
-JAVA
-    
-    - name: Create layout file
-      run: |
-        cat > app/src/main/res/layout/activity_main.xml << 'LAYOUT'
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-</LinearLayout>
-LAYOUT
-    
-    - name: Build and sign APK
+    - name: Build APK
       run: |
         cd app
-        
-        # Create debug keystore
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-        
-        # Create build directories
         mkdir -p build/classes build/dex
-        
-        # Compile Java code
-        javac -d build/classes -cp $ANDROID_HOME/platforms/android-34/android.jar src/main/java/com/example/internetprovider/MainActivity.java
-        
-        # Create DEX file
-        $ANDROID_HOME/build-tools/34.0.0/d8 --lib $ANDROID_HOME/platforms/android-34/android.jar --output build/dex/ build/classes/com/example/internetprovider/*.class
-        
-        # Create APK with aapt package
+        javac -d build/classes -cp $ANDROID_HOME/platforms/android-34/android.jar src/main/java/com/example/testapp/MainActivity.java
+        $ANDROID_HOME/build-tools/34.0.0/d8 --lib $ANDROID_HOME/platforms/android-34/android.jar --output build/dex/ build/classes/com/example/testapp/*.class
         $ANDROID_HOME/build-tools/34.0.0/aapt package -M src/main/AndroidManifest.xml -I $ANDROID_HOME/platforms/android-34/android.jar -F build/app-unsigned.apk -f
-        
-        # Add DEX to APK
         cd build
         zip -uj app-unsigned.apk dex/classes.dex
         cd ..
-        
-        # Sign APK
         $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android --out build/app-debug.apk build/app-unsigned.apk
-        
-        echo "APK built successfully!"
         ls -la build/app-debug.apk
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: internet-provider-app
+        name: android-app
         path: app/build/app-debug.apk
-        retention-days: 30
