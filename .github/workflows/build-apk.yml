@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Internet Provider App
 
 on:
   push:
@@ -27,15 +27,19 @@ jobs:
     - name: Create project files
       run: |
         # Create directory structure
-        mkdir -p app/src/main/java/com/example/testapp
+        mkdir -p app/src/main/java/com/example/internetprovider
         mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/drawable
         
-        # Create simple AndroidManifest.xml using echo
+        # Create AndroidManifest.xml
         echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/AndroidManifest.xml
         echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android"' >> app/src/main/AndroidManifest.xml
-        echo '    package="com.example.testapp">' >> app/src/main/AndroidManifest.xml
-        echo '    <application android:label="Test App">' >> app/src/main/AndroidManifest.xml
-        echo '        <activity android:name=".MainActivity">' >> app/src/main/AndroidManifest.xml
+        echo '    package="com.example.internetprovider">' >> app/src/main/AndroidManifest.xml
+        echo '    <uses-permission android:name="android.permission.INTERNET" />' >> app/src/main/AndroidManifest.xml
+        echo '    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />' >> app/src/main/AndroidManifest.xml
+        echo '    <application android:label="Интернет Провайдер" android:theme="@style/AppTheme">' >> app/src/main/AndroidManifest.xml
+        echo '        <activity android:name=".MainActivity" android:exported="true">' >> app/src/main/AndroidManifest.xml
         echo '            <intent-filter>' >> app/src/main/AndroidManifest.xml
         echo '                <action android:name="android.intent.action.MAIN" />' >> app/src/main/AndroidManifest.xml
         echo '                <category android:name="android.intent.category.LAUNCHER" />' >> app/src/main/AndroidManifest.xml
@@ -44,31 +48,130 @@ jobs:
         echo '    </application>' >> app/src/main/AndroidManifest.xml
         echo '</manifest>' >> app/src/main/AndroidManifest.xml
         
-        # Create simple MainActivity.java using echo
-        echo 'package com.example.testapp;' > app/src/main/java/com/example/testapp/MainActivity.java
-        echo 'import android.app.Activity;' >> app/src/main/java/com/example/testapp/MainActivity.java
-        echo 'import android.os.Bundle;' >> app/src/main/java/com/example/testapp/MainActivity.java
-        echo 'public class MainActivity extends Activity {' >> app/src/main/java/com/example/testapp/MainActivity.java
-        echo '    @Override' >> app/src/main/java/com/example/testapp/MainActivity.java
-        echo '    protected void onCreate(Bundle savedInstanceState) {' >> app/src/main/java/com/example/testapp/MainActivity.java
-        echo '        super.onCreate(savedInstanceState);' >> app/src/main/java/com/example/testapp/MainActivity.java
-        echo '    }' >> app/src/main/java/com/example/testapp/MainActivity.java
-        echo '}' >> app/src/main/java/com/example/testapp/MainActivity.java
+        # Create strings.xml
+        echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/values/strings.xml
+        echo '<resources>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="app_name">Интернет Провайдер</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="tariffs">Тарифы</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="contacts">Контакты</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="payment">Оплата</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="private_sector">Частный сектор</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="apartment_building">Многоквартирный дом</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="business">Юридические лица</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="pay_online">Оплатить онлайн</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="phone">Телефон: +7 (123) 456-78-90</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="email">Email: support@provider.ru</string>' >> app/src/main/res/values/strings.xml
+        echo '    <string name="address">Адрес: г. Москва, ул. Примерная, д. 1</string>' >> app/src/main/res/values/strings.xml
+        echo '</resources>' >> app/src/main/res/values/strings.xml
         
-        # Create simple layout using echo
-        echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/layout/activity_main.xml
-        echo '<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"' >> app/src/main/res/layout/activity_main.xml
-        echo '    android:layout_width="match_parent"' >> app/src/main/res/layout/activity_main.xml
-        echo '    android:layout_height="match_parent">' >> app/src/main/res/layout/activity_main.xml
-        echo '</LinearLayout>' >> app/src/main/res/layout/activity_main.xml
+        # Create colors.xml
+        echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/values/colors.xml
+        echo '<resources>' >> app/src/main/res/values/colors.xml
+        echo '    <color name="colorPrimary">#2196F3</color>' >> app/src/main/res/values/colors.xml
+        echo '    <color name="colorPrimaryDark">#1976D2</color>' >> app/src/main/res/values/colors.xml
+        echo '    <color name="colorAccent">#FF4081</color>' >> app/src/main/res/values/colors.xml
+        echo '    <color name="background">#F5F5F5</color>' >> app/src/main/res/values/colors.xml
+        echo '</resources>' >> app/src/main/res/values/colors.xml
+        
+        # Create styles.xml
+        echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/values/styles.xml
+        echo '<resources>' >> app/src/main/res/values/styles.xml
+        echo '    <style name="AppTheme" parent="android:Theme.Material.Light">' >> app/src/main/res/values/styles.xml
+        echo '        <item name="android:colorPrimary">@color/colorPrimary</item>' >> app/src/main/res/values/styles.xml
+        echo '        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>' >> app/src/main/res/values/styles.xml
+        echo '        <item name="android:colorAccent">@color/colorAccent</item>' >> app/src/main/res/values/styles.xml
+        echo '        <item name="android:windowBackground">@color/background</item>' >> app/src/main/res/values/styles.xml
+        echo '    </style>' >> app/src/main/res/values/styles.xml
+        echo '</resources>' >> app/src/main/res/values/styles.xml
+        
+        # Create MainActivity.java
+        echo 'package com.example.internetprovider;' > app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'import android.app.Activity;' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'import android.content.Intent;' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'import android.net.Uri;' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'import android.os.Bundle;' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'import android.view.View;' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'import android.widget.Button;' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'import android.widget.LinearLayout;' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'import android.widget.ScrollView;' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'import android.widget.TextView;' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo 'public class MainActivity extends Activity {' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    @Override' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    protected void onCreate(Bundle savedInstanceState) {' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        super.onCreate(savedInstanceState);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        createUI();' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    }' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    private void createUI() {' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        ScrollView scrollView = new ScrollView(this);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        LinearLayout mainLayout = new LinearLayout(this);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        mainLayout.setOrientation(LinearLayout.VERTICAL);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        mainLayout.setPadding(50, 50, 50, 50);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        // Заголовок' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        TextView title = new TextView(this);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        title.setText("Интернет Провайдер");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        title.setTextSize(24);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        mainLayout.addView(title);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        // Раздел Тарифы' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        addSection(mainLayout, "Тарифы");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        addTariff(mainLayout, "Частный сектор", "• Скорость: 100 Мбит/с\\n• Цена: 500 руб/мес\\n• Безлимитный трафик");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        addTariff(mainLayout, "Многоквартирный дом", "• Скорость: 200 Мбит/с\\n• Цена: 700 руб/мес\\n• IP-TV в подарок");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        addTariff(mainLayout, "Юридические лица", "• Скорость: 500 Мбит/с\\n• Цена: 2000 руб/мес\\n• Статический IP\\n• Приоритетное обслуживание");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        // Раздел Контакты' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        addSection(mainLayout, "Контакты");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        addContact(mainLayout, "Телефон", "+7 (123) 456-78-90");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        addContact(mainLayout, "Email", "support@provider.ru");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        addContact(mainLayout, "Адрес", "г. Москва, ул. Примерная, д. 1");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        // Кнопка оплаты' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        Button payButton = new Button(this);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        payButton.setText("Оплатить через Payberry");' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        payButton.setOnClickListener(new View.OnClickListener() {' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '            @Override' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '            public void onClick(View v) {' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://payberry.ru"));' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '                startActivity(browserIntent);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '            }' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        });' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        mainLayout.addView(payButton);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        scrollView.addView(mainLayout);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        setContentView(scrollView);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    }' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    private void addSection(LinearLayout layout, String text) {' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        TextView section = new TextView(this);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        section.setText(text);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        section.setTextSize(20);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        section.setPadding(0, 30, 0, 10);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        layout.addView(section);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    }' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    private void addTariff(LinearLayout layout, String title, String details) {' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        TextView tariff = new TextView(this);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        tariff.setText(title + "\\n" + details);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        tariff.setPadding(20, 10, 20, 20);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        tariff.setBackgroundColor(0xFFE3F2FD);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        layout.addView(tariff);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    }' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    private void addContact(LinearLayout layout, String type, String value) {' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        TextView contact = new TextView(this);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        contact.setText(type + ": " + value);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        contact.setPadding(10, 5, 10, 5);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '        layout.addView(contact);' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '    }' >> app/src/main/java/com/example/internetprovider/MainActivity.java
+        echo '}' >> app/src/main/java/com/example/internetprovider/MainActivity.java
     
     - name: Build APK
       run: |
         cd app
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
         mkdir -p build/classes build/dex
-        javac -d build/classes -cp $ANDROID_HOME/platforms/android-34/android.jar src/main/java/com/example/testapp/MainActivity.java
-        $ANDROID_HOME/build-tools/34.0.0/d8 --lib $ANDROID_HOME/platforms/android-34/android.jar --output build/dex/ build/classes/com/example/testapp/*.class
+        javac -d build/classes -cp $ANDROID_HOME/platforms/android-34/android.jar src/main/java/com/example/internetprovider/MainActivity.java
+        $ANDROID_HOME/build-tools/34.0.0/d8 --lib $ANDROID_HOME/platforms/android-34/android.jar --output build/dex/ build/classes/com/example/internetprovider/*.class
         $ANDROID_HOME/build-tools/34.0.0/aapt package -M src/main/AndroidManifest.xml -I $ANDROID_HOME/platforms/android-34/android.jar -F build/app-unsigned.apk -f
         cd build
         zip -uj app-unsigned.apk dex/classes.dex
@@ -79,5 +182,5 @@ jobs:
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: android-app
+        name: internet-provider-app
         path: app/build/app-debug.apk
