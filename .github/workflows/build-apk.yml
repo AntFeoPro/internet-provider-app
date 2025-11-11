@@ -25,21 +25,7 @@ jobs:
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
     
-    - name: Debug project structure
-      run: |
-        echo "=== ПОЛНАЯ СТРУКТУРА ВАШЕГО ПРОЕКТА ==="
-        find . -type f | grep -E "\.(java|xml|kt|gradle|json)$" | sort
-        echo ""
-        echo "=== СОДЕРЖИМОЕ APP/ ==="
-        ls -la app/ || echo "Нет папки app"
-        echo ""
-        echo "=== СОДЕРЖИМОЕ SRC/ ==="  
-        ls -la app/src/ || echo "Нет папки src"
-        echo ""
-        echo "=== ANDROIDMANIFEST ==="
-        find . -name "AndroidManifest.xml" -exec echo "Найден: {}" \;
-    
-    - name: Create minimal Android project
+    - name: Create Android project structure
       run: |
         # Создаем чистую структуру
         rm -rf app/
@@ -110,98 +96,66 @@ EOF
 </LinearLayout>
 EOF
 
-        echo "✅ Минимальный проект создан"
+        echo "✅ Проект создан"
     
-    - name: Build APK with Gradle
+    - name: Build APK manually
       run: |
         cd app
         
-        # Создаем build.gradle
-        cat > build.gradle << 'EOF'
-plugins {
-    id 'com.android.application'
-}
-
-android {
-    compileSdk 34
-    namespace 'com.example.internetprovider'
-    
-    defaultConfig {
-        applicationId "com.example.internetprovider"
-        minSdk 21
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
-    }
-    
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-        debug {
-            debuggable true
-            signingConfig signingConfigs.debug
-        }
-    }
-    
-    signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
-    }
-}
-
-task createDebugKeystore {
-    doLast {
-        def debugKeystore = file('debug.keystore')
-        if (!debugKeystore.exists()) {
-            exec {
-                commandLine 'keytool', '-genkey', '-v',
-                    '-keystore', 'debug.keystore',
-                    '-storepass', 'android',
-                    '-alias', 'androiddebugkey',
-                    '-keypass', 'android',
-                    '-keyalg', 'RSA',
-                    '-keysize', '2048',
-                    '-validity', '10000',
-                    '-dname', 'CN=Android Debug,O=Android,C=US'
-            }
-        }
-    }
-}
-
-preBuild.dependsOn createDebugKeystore
-EOF
-
-        # Создаем gradle.properties
-        echo "android.useAndroidX=true" > gradle.properties
-        echo "org.gradle.jvmargs=-Xmx2048m" >> gradle.properties
+        echo "🔧 Создаем дебажный ключ..."
+        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
         
-        # Создаем минимальный gradlewrapper
-        mkdir -p gradle/wrapper
-        cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.0-bin.zip
-networkTimeout=10000
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-EOF
-
-        # Собираем APK используя Gradle из Android SDK
-        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "cmake;3.22.1"
-        $ANDROID_HOME/build-tools/34.0.0/aidl
-        java -jar $HOME/.gradle/wrapper/dists/gradle-8.0-bin/*/gradle-8.0/bin/gradle assembleDebug --no-daemon
+        echo "🔧 Компилируем ресурсы..."
+        mkdir -p build/res
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/layout/activity_main.xml -o build/res/
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/values/strings.xml -o build/res/
+        
+        echo "🔧 Линкуем ресурсы..."
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/resources.apk \
+          -I $ANDROID_HOME/platforms/android-34/android.jar \
+          --manifest src/main/AndroidManifest.xml \
+          --java build/generated \
+          build/res/*.flat
+        
+        echo "🔧 Компилируем Java код..."
+        mkdir -p build/classes
+        javac -d build/classes \
+          -cp "$ANDROID_HOME/platforms/android-34/android.jar:build/generated" \
+          src/main/java/com/example/internetprovider/MainActivity.java \
+          build/generated/com/example/internetprovider/R.java
+        
+        echo "🔧 Создаем DEX..."
+        mkdir -p build/dex
+        $ANDROID_HOME/build-tools/34.0.0/d8 \
+          --lib $ANDROID_HOME/platforms/android-34/android.jar \
+          --output build/dex/ \
+          build/classes/com/example/internetprovider/*.class
+        
+        echo "🔧 Создаем APK..."
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/app-unsigned.apk \
+          -I $ANDROID_HOME/platforms/android-34/android.jar \
+          --manifest src/main/AndroidManifest.xml \
+          build/res/*.flat
+        
+        echo "🔧 Добавляем DEX в APK..."
+        cd build
+        zip -uj app-unsigned.apk dex/classes.dex
+        cd ..
+        
+        echo "🔧 Подписываем APK..."
+        $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+          --ks debug.keystore \
+          --ks-pass pass:android \
+          --key-pass pass:android \
+          --out build/app-debug.apk \
+          build/app-unsigned.apk
         
         echo "✅ APK собран!"
-        ls -la build/outputs/apk/debug/
+        ls -la build/app-debug.apk
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: internet-provider-app
-        path: app/build/outputs/apk/debug/*.apk
+        path: app/build/app-debug.apk
         retention-days: 30
