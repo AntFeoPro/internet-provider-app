@@ -24,37 +24,248 @@ jobs:
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-33" "build-tools;33.0.2"
     
-    - name: Create project files
+    - name: Create Gradle project structure
       run: |
+        # Create complete project structure
         mkdir -p app/src/main/java/com/example/internetprovider
         mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res/values
+        mkdir -p gradle/wrapper
         
-        # Create AndroidManifest.xml using printf
-        printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n    package="com.example.internetprovider">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <application android:label="Интернет Провайдер">\n        <activity android:name=".MainActivity" android:exported="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>\n' > app/src/main/AndroidManifest.xml
-        
-        # Create layout using printf
-        printf '<?xml version="1.0" encoding="utf-8"?>\n<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"\n    android:layout_width="match_parent"\n    android:layout_height="match_parent"\n    android:orientation="vertical"\n    android:padding="16dp">\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Интернет Провайдер"\n        android:textSize="24sp"\n        android:gravity="center"\n        android:layout_marginBottom="20dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Тарифы:"\n        android:textSize="18sp"\n        android:layout_marginBottom="10dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="• Частный сектор: 500 руб/мес"\n        android:layout_marginBottom="5dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="• Многоквартирный дом: 700 руб/мес"\n        android:layout_marginBottom="5dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="• Юридические лица: 2000 руб/мес"\n        android:layout_marginBottom="15dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Контакты:"\n        android:textSize="18sp"\n        android:layout_marginBottom="10dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Телефон: +7 (123) 456-78-90"\n        android:layout_marginBottom="5dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Email: support@provider.ru"\n        android:layout_marginBottom="5dp" />\n    <TextView\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Адрес: г. Москва, ул. Примерная, д. 1"\n        android:layout_marginBottom="20dp" />\n    <Button\n        android:id="@+id/payButton"\n        android:layout_width="match_parent"\n        android:layout_height="wrap_content"\n        android:text="Оплатить через Payberry" />\n</LinearLayout>\n' > app/src/main/res/layout/activity_main.xml
-        
-        # Create MainActivity.java using printf
-        printf 'package com.example.internetprovider;\nimport android.app.Activity;\nimport android.content.Intent;\nimport android.net.Uri;\nimport android.os.Bundle;\nimport android.view.View;\nimport android.widget.Button;\npublic class MainActivity extends Activity {\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        setContentView(0x7f030000);\n        Button payButton = (Button) findViewById(0x7f070000);\n        payButton.setOnClickListener(new View.OnClickListener() {\n            @Override\n            public void onClick(View v) {\n                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://payberry.ru"));\n                startActivity(browserIntent);\n            }\n        });\n    }\n}\n' > app/src/main/java/com/example/internetprovider/MainActivity.java
+        # Create build.gradle for app
+        cat > app/build.gradle << 'EOF'
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdk 33
+    namespace 'com.example.internetprovider'
     
-    - name: Build APK
+    defaultConfig {
+        applicationId "com.example.internetprovider"
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+    }
+    
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
+EOF
+
+        # Create project build.gradle
+        cat > build.gradle << 'EOF'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+EOF
+
+        # Create gradle wrapper properties
+        cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-7.5-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
+
+        # Create settings.gradle
+        echo 'include ":app"' > settings.gradle
+        
+        # Create AndroidManifest.xml
+        cat > app/src/main/AndroidManifest.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.internetprovider">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+EOF
+
+        # Create strings.xml
+        cat > app/src/main/res/values/strings.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Интернет Провайдер</string>
+</resources>
+EOF
+
+        # Create layout
+        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Интернет Провайдер"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Тарифы:"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="• Частный сектор: 100 Мбит/с - 500 руб/мес"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="• Многоквартирный дом: 200 Мбит/с - 700 руб/мес"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="• Юридические лица: 500 Мбит/с - 2000 руб/мес"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Контакты:"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Телефон: +7 (123) 456-78-90"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Email: support@provider.ru"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Адрес: г. Москва, ул. Примерная, д. 1"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/payButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Оплатить через Payberry"
+        android:textSize="16sp" />
+
+</LinearLayout>
+EOF
+
+        # Create MainActivity
+        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << 'EOF'
+package com.example.internetprovider;
+
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        Button payButton = findViewById(R.id.payButton);
+        payButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://payberry.ru"));
+                startActivity(browserIntent);
+            }
+        });
+    }
+}
+EOF
+
+        echo "✅ Gradle project created"
+    
+    - name: Build with Gradle
       run: |
-        cd app
-        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-        mkdir -p build/classes build/dex
-        javac -d build/classes -cp $ANDROID_HOME/platforms/android-33/android.jar src/main/java/com/example/internetprovider/MainActivity.java
-        $ANDROID_HOME/build-tools/33.0.2/d8 --lib $ANDROID_HOME/platforms/android-33/android.jar --output build/dex/ build/classes/com/example/internetprovider/*.class
-        $ANDROID_HOME/build-tools/33.0.2/aapt package -M src/main/AndroidManifest.xml -I $ANDROID_HOME/platforms/android-33/android.jar -S src/main/res -F build/app-unsigned.apk -f
-        cd build
-        zip -uj app-unsigned.apk dex/classes.dex
-        cd ..
-        $ANDROID_HOME/build-tools/33.0.2/apksigner sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android --out build/app-debug.apk build/app-unsigned.apk
-        ls -la build/app-debug.apk
-        echo "APK built successfully!"
+        # Download Gradle wrapper
+        wget -O gradle-wrapper.jar https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar
+        mkdir -p gradle/wrapper
+        mv gradle-wrapper.jar gradle/wrapper/
+        
+        # Build APK
+        ./gradlew assembleDebug --no-daemon --stacktrace
+        
+        echo "✅ APK built with Gradle!"
+        ls -la app/build/outputs/apk/debug/
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: internet-provider-app
-        path: app/build/app-debug.apk
+        path: app/build/outputs/apk/debug/*.apk
+        retention-days: 30
