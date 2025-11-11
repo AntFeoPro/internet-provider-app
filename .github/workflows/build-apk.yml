@@ -29,51 +29,65 @@ jobs:
       run: |
         echo "📁 Проверяем структуру папок..."
         find app/ -type f -name "*.xml" -o -name "*.java" | sort
-        echo "AndroidManifest.xml должен быть в app/src/main/"
+        ls -la app/src/main/
         
-    - name: Build APK with AAPT and D8
+    - name: Build and sign APK
       run: |
         cd app
         
+        echo "🔧 Создаем дебажный ключ..."
+        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        
         echo "🔧 Компиляция ресурсов..."
-        mkdir -p build/res
+        mkdir -p build/intermediates/res
         
-        # Компилируем ресурсы из src/main/res/
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/layout/activity_main.xml -o build/res/
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/values/strings.xml -o build/res/
+        # Компилируем ВСЕ ресурсы
+        find src/main/res -name "*.xml" | while read file; do
+          $ANDROID_HOME/build-tools/34.0.0/aapt2 compile "$file" -o build/intermediates/res/
+        done
         
-        echo "🔧 Линковка ресурсов и генерация R.java..."
+        echo "🔧 Линковка ресурсов..."
         $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/resources.apk \
           -I $ANDROID_HOME/platforms/android-34/android.jar \
           --manifest src/main/AndroidManifest.xml \
           --java build/generated \
-          build/res/*.flat
+          build/intermediates/res/*.flat
         
         echo "🔧 Компиляция Java кода..."
-        mkdir -p build/obj
-        javac -d build/obj \
-          -cp "src/main/java:build/generated/com/example/internetprovider:$ANDROID_HOME/platforms/android-34/android.jar" \
-          -sourcepath "src/main/java:build/generated" \
-          src/main/java/com/example/internetprovider/MainActivity.java
+        mkdir -p build/intermediates/classes
+        javac -d build/intermediates/classes \
+          -cp "$ANDROID_HOME/platforms/android-34/android.jar:build/generated" \
+          $(find src/main/java -name "*.java") \
+          $(find build/generated -name "*.java")
         
-        echo "🔧 Создание DEX файла..."
+        echo "🔧 Создание DEX..."
         $ANDROID_HOME/build-tools/34.0.0/d8 \
           --lib $ANDROID_HOME/platforms/android-34/android.jar \
-          --output build/ \
-          build/obj/com/example/internetprovider/*.class
+          --output build/intermediates/dex \
+          build/intermediates/classes/com/example/internetprovider/*.class
         
         echo "🔧 Создание APK..."
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/app-debug.apk \
+        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/app-unsigned.apk \
           -I $ANDROID_HOME/platforms/android-34/android.jar \
           --manifest src/main/AndroidManifest.xml \
-          build/res/*.flat
+          -A build/intermediates/res \
+          --java build/generated \
+          build/intermediates/res/*.flat
         
-        echo "🔧 Добавление DEX в APK..."
+        echo "🔧 Добавляем DEX в APK..."
         cd build
-        zip -uj app-debug.apk classes.dex
+        zip -uj app-unsigned.apk intermediates/dex/classes.dex
         cd ..
         
-        echo "✅ APK собран успешно!"
+        echo "🔧 Подписываем APK..."
+        $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+          --ks debug.keystore \
+          --ks-pass pass:android \
+          --key-pass pass:android \
+          --out build/app-debug.apk \
+          build/app-unsigned.apk
+        
+        echo "✅ APK собран и подписан!"
         ls -la build/app-debug.apk
       
     - name: Upload APK
