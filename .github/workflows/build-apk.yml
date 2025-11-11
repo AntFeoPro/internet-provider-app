@@ -25,28 +25,25 @@ jobs:
       run: |
         yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
     
-    - name: Create Android project structure
+    - name: Create project files
       run: |
-        # Создаем чистую структуру
-        rm -rf app/
+        # Создаем структуру папок
         mkdir -p app/src/main/java/com/example/internetprovider
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/res/values
         
-        # AndroidManifest.xml
-        cat > app/src/main/AndroidManifest.xml << 'EOF'
+        # Создаем AndroidManifest.xml
+        cat > app/src/main/AndroidManifest.xml << EOF
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.internetprovider">
-    
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@style/AppTheme">
+        android:label="Internet Provider"
+        android:theme="@android:style/Theme.DeviceDefault">
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name">
+            android:label="Internet Provider">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -56,101 +53,75 @@ jobs:
 </manifest>
 EOF
 
-        # strings.xml
-        cat > app/src/main/res/values/strings.xml << 'EOF'
-<resources>
-    <string name="app_name">Internet Provider</string>
-</resources>
-EOF
-
-        # MainActivity.java
-        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << 'EOF'
+        # Создаем MainActivity.java
+        cat > app/src/main/java/com/example/internetprovider/MainActivity.java << EOF
 package com.example.internetprovider;
-
 import android.app.Activity;
 import android.os.Bundle;
-
 public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
     }
 }
 EOF
 
-        # activity_main.xml
-        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+        # Создаем простой layout
+        cat > app/src/main/res/layout/activity_main.xml << EOF
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical">
-    
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello Internet Provider!"
-        android:textSize="24sp" />
+    android:layout_height="match_parent">
 </LinearLayout>
 EOF
-
-        echo "✅ Проект создан"
     
-    - name: Build APK manually
+    - name: Build APK
       run: |
         cd app
         
-        echo "🔧 Создаем дебажный ключ..."
+        # Создаем дебажный ключ
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
         
-        echo "🔧 Компилируем ресурсы..."
+        # Компилируем ресурсы
         mkdir -p build/res
         $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/layout/activity_main.xml -o build/res/
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/values/strings.xml -o build/res/
         
-        echo "🔧 Линкуем ресурсы..."
+        # Линкуем ресурсы
         $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/resources.apk \
           -I $ANDROID_HOME/platforms/android-34/android.jar \
           --manifest src/main/AndroidManifest.xml \
           --java build/generated \
           build/res/*.flat
         
-        echo "🔧 Компилируем Java код..."
+        # Компилируем Java
         mkdir -p build/classes
         javac -d build/classes \
-          -cp "$ANDROID_HOME/platforms/android-34/android.jar:build/generated" \
-          src/main/java/com/example/internetprovider/MainActivity.java \
-          build/generated/com/example/internetprovider/R.java
+          -cp "$ANDROID_HOME/platforms/android-34/android.jar" \
+          src/main/java/com/example/internetprovider/MainActivity.java
         
-        echo "🔧 Создаем DEX..."
+        # Создаем DEX
         mkdir -p build/dex
         $ANDROID_HOME/build-tools/34.0.0/d8 \
           --lib $ANDROID_HOME/platforms/android-34/android.jar \
           --output build/dex/ \
           build/classes/com/example/internetprovider/*.class
         
-        echo "🔧 Создаем APK..."
-        $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/app-unsigned.apk \
+        # Создаем и подписываем APK
+        $ANDROID_HOME/build-tools/34.0.0/aapt package \
+          -M src/main/AndroidManifest.xml \
           -I $ANDROID_HOME/platforms/android-34/android.jar \
-          --manifest src/main/AndroidManifest.xml \
-          build/res/*.flat
+          -F build/app-unsigned.apk \
+          -f
         
-        echo "🔧 Добавляем DEX в APK..."
+        # Добавляем DEX
         cd build
         zip -uj app-unsigned.apk dex/classes.dex
         cd ..
         
-        echo "🔧 Подписываем APK..."
-        $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
-          --ks debug.keystore \
-          --ks-pass pass:android \
-          --key-pass pass:android \
-          --out build/app-debug.apk \
-          build/app-unsigned.apk
+        # Подписываем
+        apksigner sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android --out build/app-debug.apk build/app-unsigned.apk
         
-        echo "✅ APK собран!"
+        echo "✅ APK создан!"
         ls -la build/app-debug.apk
       
     - name: Upload APK
