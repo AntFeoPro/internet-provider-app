@@ -1,400 +1,108 @@
-name: Deploy Provider PWA
+name: Deploy Provider PWA to GitHub Pages
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
     
     - name: Create PWA files
       run: |
-        # Создаем папку для PWA
-        mkdir -p public
+        mkdir -p _site
         
-        # Создаем главную HTML страницу
-        cat > public/index.html << 'EOF'
+        # Создаем главную страницу
+        cat > _site/index.html << 'EOF'
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Интернет Провайдер - Быстрый интернет для всех</title>
-    <meta name="description" content="Подключение интернета для частных домов, многоквартирных домов и юридических лиц">
+    <title>Интернет Провайдер</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .app-card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .logo {
-            font-size: 3rem;
-            margin-bottom: 10px;
-        }
-        
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 2.2rem;
-        }
-        
-        .subtitle {
-            color: #7f8c8d;
-            font-size: 1.1rem;
-        }
-        
-        .section {
-            margin: 30px 0;
-        }
-        
-        .section-title {
-            color: #3498db;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-        }
-        
-        .tariff-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
-            border-left: 4px solid #3498db;
-            transition: transform 0.3s ease;
-        }
-        
-        .tariff-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        
-        .tariff-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .tariff-icon {
-            font-size: 1.5rem;
-            margin-right: 15px;
-        }
-        
-        .tariff-name {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .tariff-price {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #27ae60;
-            text-align: right;
-            flex-grow: 1;
-        }
-        
-        .tariff-features {
-            list-style: none;
-        }
-        
-        .tariff-features li {
-            padding: 8px 0;
-            border-bottom: 1px solid #ecf0f1;
-        }
-        
-        .tariff-features li:last-child {
-            border-bottom: none;
-        }
-        
-        .contact-info {
-            background: #e8f4fc;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 10px 0;
-        }
-        
-        .contact-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 0;
-        }
-        
-        .contact-icon {
-            font-size: 1.2rem;
-            margin-right: 15px;
-            width: 30px;
-            text-align: center;
-        }
-        
-        .pay-button {
-            display: block;
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            border-radius: 15px;
-            text-decoration: none;
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin: 30px 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
-        }
-        
-        .pay-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(39, 174, 96, 0.4);
-        }
-        
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .app-card {
-                padding: 20px;
-            }
-            
-            h1 {
-                font-size: 1.8rem;
-            }
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2196F3; }
+        .tariff { background: #e3f2fd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .contact { margin: 5px 0; }
+        .pay-button { background: #4caf50; color: white; padding: 15px; text-align: center; border-radius: 5px; text-decoration: none; display: block; margin: 20px 0; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="app-card">
-            <div class="header">
-                <div class="logo">🌐</div>
-                <h1>Интернет Провайдер</h1>
-                <p class="subtitle">Скоростной интернет для дома и бизнеса</p>
-            </div>
-
-            <!-- Секция тарифов -->
-            <div class="section">
-                <h2 class="section-title">📊 Наши тарифы</h2>
-                
-                <div class="tariff-card">
-                    <div class="tariff-header">
-                        <div class="tariff-icon">🏠</div>
-                        <div class="tariff-name">Частный сектор</div>
-                        <div class="tariff-price">500 ₽/мес</div>
-                    </div>
-                    <ul class="tariff-features">
-                        <li>✓ Скорость до 100 Мбит/с</li>
-                        <li>✓ Безлимитный трафик</li>
-                        <li>✓ Бесплатное подключение</li>
-                        <li>✓ Круглосуточная поддержка</li>
-                    </ul>
-                </div>
-
-                <div class="tariff-card">
-                    <div class="tariff-header">
-                        <div class="tariff-icon">🏢</div>
-                        <div class="tariff-name">Многоквартирный дом</div>
-                        <div class="tariff-price">700 ₽/мес</div>
-                    </div>
-                    <ul class="tariff-features">
-                        <li>✓ Скорость до 200 Мбит/с</li>
-                        <li>✓ IP-телевидение в подарок</li>
-                        <li>✓ Wi-Fi роутер в аренду</li>
-                        <li>✓ Приоритетная техподдержка</li>
-                    </ul>
-                </div>
-
-                <div class="tariff-card">
-                    <div class="tariff-header">
-                        <div class="tariff-icon">💼</div>
-                        <div class="tariff-name">Юридические лица</div>
-                        <div class="tariff-price">2000 ₽/мес</div>
-                    </div>
-                    <ul class="tariff-features">
-                        <li>✓ Скорость до 500 Мбит/с</li>
-                        <li>✓ Выделенный статический IP</li>
-                        <li>✓ Гарантированное время восстановления</li>
-                        <li>✓ Персональный менеджер</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Секция контактов -->
-            <div class="section">
-                <h2 class="section-title">📞 Контактная информация</h2>
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <div class="contact-icon">📞</div>
-                        <div>+7 (123) 456-78-90</div>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon">✉️</div>
-                        <div>support@provider.ru</div>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon">🏠</div>
-                        <div>г. Москва, ул. Примерная, д. 1</div>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon">🕒</div>
-                        <div>Круглосуточная техническая поддержка</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Кнопка оплаты -->
-            <a href="https://payberry.ru" class="pay-button" target="_blank">
-                💳 Перейти к оплате через Payberry
-            </a>
-
-            <div class="footer">
-                <p>© 2024 Интернет Провайдер. Все права защищены.</p>
-                <p>Техническая поддержка: круглосуточно</p>
-            </div>
+        <h1>🌐 Интернет Провайдер</h1>
+        
+        <h2>📊 Тарифы</h2>
+        <div class="tariff">
+            <h3>🏠 Частный сектор</h3>
+            <p>• Скорость: 100 Мбит/с - 500 руб/мес</p>
         </div>
+        <div class="tariff">
+            <h3>🏢 Многоквартирный дом</h3>
+            <p>• Скорость: 200 Мбит/с - 700 руб/мес</p>
+        </div>
+        <div class="tariff">
+            <h3>💼 Юридические лица</h3>
+            <p>• Скорость: 500 Мбит/с - 2000 руб/мес</p>
+        </div>
+
+        <h2>📞 Контакты</h2>
+        <p class="contact">📞 Телефон: +7 (123) 456-78-90</p>
+        <p class="contact">✉️ Email: support@provider.ru</p>
+        <p class="contact">🏠 Адрес: г. Москва, ул. Примерная, д. 1</p>
+
+        <a href="https://payberry.ru" class="pay-button" target="_blank">
+            💳 Оплатить через Payberry
+        </a>
     </div>
-
-    <script>
-        // Простой PWA функционал
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => console.log('SW registered'))
-                .catch(error => console.log('SW registration failed'));
-        }
-
-        // Добавляем инсталл-промпт для PWA
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
-    </script>
 </body>
 </html>
 EOF
 
-        # Создаем manifest.json
-        cat > public/manifest.json << 'EOF'
+        # Создаем manifest
+        cat > _site/manifest.json << 'EOF'
 {
     "name": "Интернет Провайдер",
     "short_name": "Провайдер",
-    "description": "Приложение для подключения и управления интернет-услугами",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#667eea",
-    "theme_color": "#764ba2",
-    "orientation": "portrait",
-    "categories": ["business", "utilities"],
-    "icons": [
-        {
-            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>",
-            "sizes": "192x192",
-            "type": "image/svg+xml"
-        }
-    ]
+    "background_color": "#2196F3",
+    "theme_color": "#2196F3"
 }
 EOF
 
-        # Создаем простой service worker
-        cat > public/sw.js << 'EOF'
-const CACHE_NAME = 'provider-app-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
-];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
-});
-EOF
-
-        # Создаем README с инструкциями
-        cat > public/README.md << 'EOF'
-# 🌐 Приложение Интернет Провайдера
-
-Это Progressive Web App (PWA) для интернет-провайдера.
-
-## Возможности приложения:
-- 📊 Просмотр тарифов для разных типов подключения
-- 📞 Контактная информация
-- 💳 Оплата услуг через Payberry
-- 📱 Установка на мобильные устройства как PWA
-
-## Как установить на телефон:
-1. Откройте приложение в браузере
-2. В меню браузера выберите "Добавить на главный экран"
-3. Приложение будет установлено как обычное приложение
-
-## Тарифы:
-- 🏠 Частный сектор: 500 руб/мес
-- 🏢 Многоквартирный дом: 700 руб/мес  
-- 💼 Юридические лица: 2000 руб/мес
-EOF
-
-        echo "✅ PWA приложение создано!"
-      
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
+        echo "✅ PWA создано!"
+    
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./public
-        force_orphan: true
-        
-    - name: Upload as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: provider-pwa
-        path: public/
-        retention-days: 30
+        path: ./_site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
