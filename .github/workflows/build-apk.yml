@@ -13,7 +13,7 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
+      uses: android-actions/setup-android@v2
       with:
         packages: |
           platforms;android-34
@@ -39,7 +39,6 @@ jobs:
         $ANDROID_HOME/build-tools/34.0.0/aapt2 compile src/main/res/values/strings.xml -o build/res/
         
         echo "🔧 Линковка ресурсов и генерация R.java..."
-        # Используем правильный путь к AndroidManifest.xml
         $ANDROID_HOME/build-tools/34.0.0/aapt2 link -o build/resources.apk \
           -I $ANDROID_HOME/platforms/android-34/android.jar \
           --manifest src/main/AndroidManifest.xml \
